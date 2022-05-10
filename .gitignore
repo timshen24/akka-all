@@ -1,0 +1,5 @@
+# Project exclude paths
+/akka-essentials/target/
+/akka-essentials/target/scala-2.13/classes/
+/project/target/
+/target/
