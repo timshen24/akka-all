@@ -17,6 +17,11 @@ object ChangingActorBehaviourExercises1 extends App {
   class Counter extends Actor {
     import Counter._
 
+    /**
+     * In order to rewrite a stateful actor to a stateless actor, you need to put the mutable state into the parameters of the Receive Handlers of your own
+     * @param currentCount mutable state
+     * @return
+     */
     def counterReceive(currentCount: Int): Receive = {
       case Increment =>
         println(s"[$currentCount] incrementing by 1")
