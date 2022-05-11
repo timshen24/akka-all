@@ -2,22 +2,22 @@ package part2actors
 
 import akka.actor._
 
-object ChangingActorBehaviour extends App {
-  import StatelessFussyKid._
+object ChangingActorBehaviour2 extends App {
   import Mom._
+  import StatelessFussyKid._
 
   class StatelessFussyKid extends Actor {
     override def receive: Receive = happyReceive
 
     def happyReceive: Receive = {
-      case Food(VEGETABLES) => context.become(sadReceive) // change receive handler to sadReceive
+      case Food(VEGETABLES) => context.become(sadReceive, discardOld = false) // push happyReceive to stack
       case Food(CHOCOLATE) => // do nothing
       case Ask(_) => sender() ! KidAccept
     }
 
     def sadReceive: Receive = {
-      case Food(VEGETABLES) => // do nothing
-      case Food(CHOCOLATE) => context.become(happyReceive) // change receive handler to happyReceive
+      case Food(VEGETABLES) => context.become(sadReceive, discardOld = false)
+      case Food(CHOCOLATE) => context.unbecome() // push happyReceive to stack
       case Ask(_) => sender() ! KidReject
     }
   }
@@ -36,6 +36,9 @@ object ChangingActorBehaviour extends App {
       case MomStart(kidRef) =>
         // test our application
         kidRef ! Food(VEGETABLES)
+        kidRef ! Food(VEGETABLES)
+        kidRef ! Food(CHOCOLATE)
+        kidRef ! Food(CHOCOLATE)
         kidRef ! Ask("do you want to play?")
       case KidAccept => println("Yay, my kid is happy")
       case KidReject => println("My kid is sad, but he is healthy")
@@ -61,5 +64,34 @@ object ChangingActorBehaviour extends App {
    *   kid receives Food(veg) -> kid will change the handler to sadReceive
    *   kid receives Ask(play?) -> kid replies with the sadReceive handler
    * Mom receives KidReject
+   */
+
+  /**
+   * Food(veg) -> message handler turns to sadReceive
+   * Food(chocolate) -> becomes happyReceive
+   */
+
+  /**
+   * context.become
+   * Food(veg) -> stack.push(sadReceive)
+   * Food(chocolate) -> stack.push(happyReceive)
+   *
+   * Stack looks like:
+   * 1. happyReceive
+   * 2. sadReceive
+   * 3. happyReceive
+   * 4. override def receive: Receive = ???
+   */
+
+  /**
+   * new Behaviour
+   * Food(veg)
+   * Food(veg)
+   * Food(chocolate)
+   *
+   * Stack:
+   * 1. sadReceive (this one will be poped)
+   * 2. sadReceive
+   * 3. happyReceive
    */
 }
