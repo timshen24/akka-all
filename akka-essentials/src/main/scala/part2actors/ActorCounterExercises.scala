@@ -1,6 +1,7 @@
 package part2actors
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import part2actors.ActorCounterExercises.Counter._
 
 object ActorCounterExercises extends App{
   /**
@@ -9,33 +10,28 @@ object ActorCounterExercises extends App{
    *    - Decrement
    *    - Print
    **/
-  case class Counter(cnt: Int) {
-    def increment: Counter = this.copy(cnt + 1)
-    def decrement: Counter = this.copy(cnt - 1)
 
-    def print(): Unit = println(s"count = $cnt")
+  // DOMAIN of the counter
+  object Counter {
+    case object Increment
+    case object Decrement
+    case object Print
   }
 
-  var counter = Counter(0)
+  class Counter extends Actor {
+    var count = 0
 
-  class CounterActor extends Actor {
     override def receive: Receive = {
-      case "Increment" => counter = counter.increment
-      case "Decrement" => counter = counter.decrement
-      case "Print" => counter.print()
+      case Increment => count += 1
+      case Decrement => count -= 1
+      case Print => print(s"[count] My current count is $count")
     }
   }
 
   val system = ActorSystem("ExerciseDemo")
-  private val counterActor: ActorRef = system.actorOf(Props[CounterActor], "CounterActor")
-  counterActor ! "Increment"
-  counterActor ! "Increment"
-  counterActor ! "Increment"
-  counterActor ! "Increment"
-  counterActor ! "Increment"
-  counterActor ! "Increment"
-  counterActor ! "Increment"
-  counterActor ! "Decrement"
-  counterActor ! "Decrement"
-  counterActor ! "Print"
+  private val counter: ActorRef = system.actorOf(Props[Counter], "My Counter")
+  (1 to 5).foreach(_ => counter ! Increment)
+  (1 to 3).foreach(_ => counter ! Decrement)
+
+  counter ! Print
 }
