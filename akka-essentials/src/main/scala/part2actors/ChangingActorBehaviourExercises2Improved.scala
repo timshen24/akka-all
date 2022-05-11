@@ -11,8 +11,6 @@ object ChangingActorBehaviourExercises2Improved extends App {
   case class VoteStatusReply(candidate: Option[String])
 
   class Citizen extends Actor {
-    var candidate: Option[String] = None
-
     override def receive: Receive = {
       case Vote(c) => context.become(voted(c))
       case VoteStatusRequest => sender() ! VoteStatusReply(None)
@@ -49,8 +47,6 @@ object ChangingActorBehaviourExercises2Improved extends App {
         citizens.foreach(citizenRef => citizenRef ! VoteStatusRequest)
         context.become(awaitingStatus(citizens, Map()))
     }
-    
-    
   }
 
   val system = ActorSystem("SimplifiedVotingSystem")
@@ -68,7 +64,7 @@ object ChangingActorBehaviourExercises2Improved extends App {
   voteAggregator ! AggregateVotes(Set(alice, bob, charlie, daniel))
 
   /**
-   * 1. Print the status of the votes
+   * Print the status of the votes
    *    Martin -> 1
    *    Jonas  -> 1
    *    Roland -> 2
