@@ -29,30 +29,56 @@ object ChildActorsExercises extends App {
   }
 
   class WordCounterMaster extends Actor {
-
-    def withChildrenRef(childrenRef: Seq[ActorRef]): Receive = {
-      case WordCountTask(id, text) => childrenRef(id % childrenRef.length) forward (id, text)
-      case WordCountReply(id, count) => println(s"id: $id replies $count")
-    }
-
     override def receive: Receive = {
       case Initialize(nChildren) =>
-        val childrenRef: Seq[ActorRef] = (1 to nChildren).map(i => context.actorOf(Props[WordCounterWorker], s"worker$i"))
-        context.become(withChildrenRef(childrenRef))
+        println(s"[master] initializing...")
+        val childrenRef: Seq[ActorRef] = for (i <- 1 to nChildren) yield context.actorOf(Props[WordCounterWorker], s"wcw_$i")
+        context.become(withChildren(childrenRef, 0, 0, Map()))
+    }
+
+    // 2 A pattern: keeping in track of which reply is associated with which request
+    // Especially useful when need to follow a huge bunch of children tasks
+    def withChildren(childrenRefs: Seq[ActorRef], currentChildIndex: Int, currentTaskId: Int, requestMap: Map[Int, ActorRef]): Receive = {
+      case text: String =>
+        println(s"[master] I have received: $text - I will send it to child $currentChildIndex")
+        val originalSender = sender()
+        val task = WordCountTask(currentTaskId, text)
+        val childRef = childrenRefs(currentChildIndex)
+        childRef ! task
+        val nextChildIndex = (currentChildIndex + 1) % childrenRefs.length
+        val newTaskId = currentTaskId + 1
+        val newRequestMap = requestMap + (currentTaskId -> originalSender)
+        context.become(withChildren(childrenRefs, nextChildIndex, newTaskId, newRequestMap))
+      case WordCountReply(id, count) =>
+        // 1 problem. How shall I send the result back to the original sender?
+        println(s"[master] I have received a reply for task id $id with $count")
+        val originalSender = requestMap(id)
+        originalSender ! count
+        context.become(withChildren(childrenRefs, currentChildIndex, currentTaskId, requestMap - id))
     }
   }
 
   class WordCounterWorker extends Actor {
     override def receive: Receive = {
-      case (id: Int, text: String) => {
-        println(s"${self.path} received text: $text")
-        context.parent ! WordCountReply(id, text.split(" ").length)
-      }
+      case WordCountTask(id, text) =>
+        println(s"${self.path} I have received task $id with $text")
+        sender() ! WordCountReply(id, text.split(" ").length)
     }
   }
 
-  val system = ActorSystem("WordCountSystem")
-  val wordCounterMaster = system.actorOf(Props[WordCounterMaster], "master")
-  wordCounterMaster ! Initialize(10)
-  wordCounterMaster ! WordCountTask(1, "Akka is awesome")
+  class TestActor extends Actor {
+    override def receive: Receive = {
+      case "go" =>
+        val master = context.actorOf(Props[WordCounterMaster], "master")
+        master ! Initialize(3)
+        val texts = List("I love Akka", "Scala is super dope", "yes", "me too")
+        texts.foreach(text => master ! text)
+      case count: Int =>
+        println(s"[test actor] I received a reply: $count")
+    }
+  }
+
+  val system = ActorSystem("RoundRobinWordCountExercise")
+  val testActor = system.actorOf(Props[TestActor], "testActor")
+  testActor ! "go"
 }
