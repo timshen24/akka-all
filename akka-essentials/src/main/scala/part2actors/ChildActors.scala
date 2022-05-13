@@ -13,7 +13,6 @@ object ChildActors extends App {
   }
 
   class Parent extends Actor {
-
     //    var child: ActorRef = null
     override def receive: Receive = {
       case CreateChild(name) =>
