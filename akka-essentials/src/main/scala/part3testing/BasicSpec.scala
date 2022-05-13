@@ -65,7 +65,7 @@ class BasicSpec extends TestKit(ActorSystem("BasicSpec"))
     "reply with cool tech in a different way" in {
       labTestActor ! "favoriteTech"
       val messages = receiveN(2) // returns a sequence of Any
-
+      println(messages)
       // free to do more complicated assertions
     }
 
