@@ -54,16 +54,25 @@ object TimersSchedulersExercise extends App {
   case object Stop
 
   class TimerBasedHeartBeatActor extends Actor with ActorLogging with Timers {
+    /**
+     * start a timer named `TimerKey` and send `Start` to self
+      */
     timers.startSingleTimer(TimerKey, Start, 500 millis)
 
     override def receive: Receive = {
       case Start =>
         log.info("Bootstrapping")
-        timers.startPeriodicTimer(TimerKey, Reminder, 1 second)
+        /**
+         * start a periodic timer sending `Reminder` to self
+          */
+        timers.startTimerWithFixedDelay(TimerKey, Reminder, 1 second)
       case Reminder =>
         log.info("I am alive")
       case Stop =>
         log.warning("Stopping!")
+        /**
+         * Cancel timer
+         */
         timers.cancel(TimerKey)
         context.stop(self)
     }

@@ -2,7 +2,6 @@ package part5infra
 
 import akka.actor._
 
-import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
