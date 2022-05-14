@@ -85,4 +85,38 @@ object BackOffSupervisorPattern extends App {
 
   val stopSupervisor = system.actorOf(stopSupervisorProps, "stopSupervisor")
   stopSupervisor ! ReadFile
+
+  class EagerFBPActor extends FileBasedPersistentActor {
+    override def preStart(): Unit = {
+      log.info("Eager actor starting")
+      dataSource = Source.fromFile(new File("akka-essentials/src/main/resources/testfiles/important_data.txt"))
+
+    }
+  }
+
+  val eagerFBPActor = system.actorOf(Props[EagerFBPActor])
+  // IF an actor tries to throw an ActorIntializationException => means STOP
+
+  /**
+   * The backoff supervisor will kick on the stopped, starting it again
+   */
+  val repeatedSupervisorProps = BackoffSupervisor.props(
+    BackoffOpts.onStop(
+      Props[EagerFBPActor],
+      "eagerActor",
+      1 second,
+      30 seconds,
+      0.1
+    )
+  )
+  val repeatedSupervisor = system.actorOf(repeatedSupervisorProps, "eagerSupervisor")
+
+  /**
+   * eagerSupervisor
+   *   - child eagerActor
+   *     - will die on start with ActorIntializationException
+   *     - trigger the supervision strategy in eagerSupervisor => STOP eagerActor
+   *   - backoff will kick in after 1 second, 2s, 4s, 8s, 16s, ...
+   *
+   */
 }
