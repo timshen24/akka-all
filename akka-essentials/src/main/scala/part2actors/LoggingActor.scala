@@ -9,7 +9,6 @@ object LoggingActor extends App {
     val logger: LoggingAdapter = Logging(context.system, this)
     override def receive: Receive = {
       case message => logger.info(message.toString) // LOG IT
-
     }
   }
 

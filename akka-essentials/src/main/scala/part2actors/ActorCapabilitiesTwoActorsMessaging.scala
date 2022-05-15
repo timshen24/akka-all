@@ -2,15 +2,15 @@ package part2actors
 
 import akka.actor._
 
-object ActorCapabilities extends App {
+object ActorCapabilitiesTwoActorsMessaging extends App {
   class SimplerActor extends Actor {
     override def receive: Receive = {
       case "Hi!" => /*context.*/sender() ! "Hello! there!" // 4 replying to a message. The sender here refers to Bob
       case message: String => println(s"[${context.self.path}] I have received $message")
-      case number: Int => println(s"[${self}] I have received a NUMBER: $number")
+      case number: Int => println(s"[$self] I have received a NUMBER: $number")
       case SpecialMessage(contents) => println(s"[simple actor] I have received something SPECIAL $contents")
       case SendMessageToYourself(content) => self ! content
-      case SayHiTo(ref) => (ref ! "Hi!")(self) // 9 In this case, Alice is being passed as the sender. But if I do forwarding, I can keep the original sender, which is noSender
+      case SayHiTo(ref) => (ref ! "Hi!")(self) // 9 In this case, Alice is being passed as the sender, namely `Alice.SayHiTo(bob)`. But if I do forwarding, I can keep the original sender, which is noSender
 
       case WirelessPhoneMessage(content, ref) => ref forward (content + "s") // I keep the original sender of the WirelessPhoneMessage
     }

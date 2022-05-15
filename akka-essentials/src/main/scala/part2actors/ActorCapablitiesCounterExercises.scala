@@ -2,7 +2,7 @@ package part2actors
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 
-object ActorCounterExercises extends App{
+object ActorCapablitiesCounterExercises extends App{
   import Counter._
   /**
    * 1. a Counter actor
