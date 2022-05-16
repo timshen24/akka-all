@@ -61,7 +61,7 @@ object StashDemo extends App {
         log.info(s"I am writing $data")
         innerData = data
       case Close =>
-        log.info("closing resource")
+        log.info("closing resource in open method")
         unstashAll()
         context.become(closed)
       case message =>
@@ -80,6 +80,6 @@ object StashDemo extends App {
   resourceActor ! Open
   resourceActor ! Open
   resourceActor ! Write("I love stash")
-  resourceActor ! Close
+  resourceActor ! Close // unstash open -> context.become(close) -> do case open in close method -> context.become(open) -> do case read in open method
   resourceActor ! Read
 }
